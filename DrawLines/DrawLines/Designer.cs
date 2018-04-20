@@ -26,7 +26,7 @@ namespace DrawLines
         private const int windowXBoundriesInPixels = 20;
         private const int windowYBoundriesInPixels = 40;
         private const int drawSurfaceMaringToWindowInPixels = 10;
-        private const int linesMarginToLayerInPixels = 1;
+        private const int gridLinesMarginToLayerInPixels = 1;
 
 
         public Designer()
@@ -96,8 +96,8 @@ namespace DrawLines
 
         private void DrawGridRightAndBottomLines(Graphics graphics)
         {
-            DrawHorizontalLine(graphics, gridCellCountY, -linesMarginToLayerInPixels);
-            DrawVerticalLine(graphics, gridCellCountX, -linesMarginToLayerInPixels);
+            DrawHorizontalLine(graphics, gridCellCountY, -gridLinesMarginToLayerInPixels);
+            DrawVerticalLine(graphics, gridCellCountX, -gridLinesMarginToLayerInPixels);
         }
 
         private void DrawHorizontalLine(Graphics graphics, int axis, int offset)
