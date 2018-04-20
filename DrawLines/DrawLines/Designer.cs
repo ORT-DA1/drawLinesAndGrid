@@ -20,7 +20,8 @@ namespace DrawLines
         private Point start;
         private List<Point> points;
 
-        private const int gridCellCount = 30;
+        private const int gridCellCountX = 1;
+        private const int gridCellCountY = 10;
         private const int cellSizeInPixels = 40;
         private const int windowXBoundriesInPixels = 20;
         private const int windowYBoundriesInPixels = 40;
@@ -33,9 +34,10 @@ namespace DrawLines
             points = new List<Point>();
             InitializeComponent();
 
-            int drawSurfaceSize = cellSizeInPixels * gridCellCount;
-            CreateDrawSurface(drawSurfaceSize);
-            AdjustWindowSize(drawSurfaceSize);
+            int drawSurfaceSizeX = cellSizeInPixels * gridCellCountX;
+            int drawSurfaceSizeY = cellSizeInPixels * gridCellCountY;
+            CreateDrawSurface(drawSurfaceSizeX, drawSurfaceSizeY);
+            AdjustWindowSize(drawSurfaceSizeX, drawSurfaceSizeY);
 
             CreateOrRecreateLayer(ref gridLayer);
             PaintGrid();
@@ -43,13 +45,13 @@ namespace DrawLines
             CreateOrRecreateLayer(ref currentLineLayer);
         }
 
-        private void CreateDrawSurface(int drawSurfaceSize)
+        private void CreateDrawSurface(int drawSurfaceSizeX, int drawSurfaceSizeY)
         {
             drawSurface = new NoFlickerPanel();
             SuspendLayout();
             drawSurface.Name = "drawSurface";
             drawSurface.Location = new Point(drawSurfaceMaringToWindowInPixels, drawSurfaceMaringToWindowInPixels);
-            drawSurface.Size = new Size(drawSurfaceSize, drawSurfaceSize);
+            drawSurface.Size = new Size(drawSurfaceSizeX, drawSurfaceSizeY);
             drawSurface.TabIndex = 0;
             drawSurface.Paint += new PaintEventHandler(drawSurface_Paint);
             drawSurface.MouseClick += new MouseEventHandler(drawSurface_MouseClickStart);
@@ -57,10 +59,11 @@ namespace DrawLines
             ResumeLayout(false);
         }
 
-        private void AdjustWindowSize(int drawSurfaceSize)
+        private void AdjustWindowSize(int drawSurfaceSizeX, int drawSurfaceSizeY)
         {
-            int windowSize = drawSurfaceSize + drawSurfaceMaringToWindowInPixels * 2;
-            MaximumSize = new Size(windowSize + windowXBoundriesInPixels, windowSize + windowYBoundriesInPixels);
+            int windowSizeX = drawSurfaceSizeX + drawSurfaceMaringToWindowInPixels * 2;
+            int windowSizeY = drawSurfaceSizeY + drawSurfaceMaringToWindowInPixels * 2;
+            MaximumSize = new Size(windowSizeX + windowXBoundriesInPixels, windowSizeY + windowYBoundriesInPixels);
             AutoScrollMargin = new Size(drawSurfaceMaringToWindowInPixels, drawSurfaceMaringToWindowInPixels);
         }
 
@@ -69,32 +72,44 @@ namespace DrawLines
 
             using (Graphics graphics = Graphics.FromImage(gridLayer))
             {
-                for (int i = 0; i < gridCellCount; i++)
+                for (int i = 0; i < gridCellCountY; i++)
                 {
-                    DrawGridHorizontalAndVerticalLines(graphics, i);
+                    DrawGridHorizontalLines(graphics, i);
+                }
+                for (int i = 0; i < gridCellCountX; i++)
+                {
+                    DrawGridVerticalLines(graphics, i);
                 }
                 DrawGridRightAndBottomLines(graphics);
             }
             drawSurface.Invalidate();
         }
 
-        private void DrawGridHorizontalAndVerticalLines(Graphics graphics, int axis)
+        private void DrawGridHorizontalLines(Graphics graphics, int axis)
         {
-            DrawHorizontalAndVerticalLines(graphics, axis, 0);
+            DrawHorizontalLine(graphics, axis, 0);
+        }
+        private void DrawGridVerticalLines(Graphics graphics, int axis)
+        {
+            DrawVerticalLine(graphics, axis, 0);
         }
 
         private void DrawGridRightAndBottomLines(Graphics graphics)
         {
-            DrawHorizontalAndVerticalLines(graphics, gridCellCount, -linesMarginToLayerInPixels);
+            DrawHorizontalLine(graphics, gridCellCountY, -linesMarginToLayerInPixels);
+            DrawVerticalLine(graphics, gridCellCountX, -linesMarginToLayerInPixels);
         }
 
-
-        private void DrawHorizontalAndVerticalLines(Graphics graphics, int axis, int offset)
+        private void DrawHorizontalLine(Graphics graphics, int axis, int offset)
         {
-            int gridCellWidth = axis * gridLayer.Width / gridCellCount + offset;
-            int gridCellHeight = axis * gridLayer.Height / gridCellCount + offset;
-            graphics.DrawLine(Pens.Black, gridCellWidth, 0, gridCellWidth, gridLayer.Height);
+            int gridCellHeight = axis * gridLayer.Height / gridCellCountY + offset;
             graphics.DrawLine(Pens.Black, 0, gridCellHeight, gridLayer.Width, gridCellHeight);
+        }
+
+        private void DrawVerticalLine(Graphics graphics, int axis, int offset)
+        {
+            int gridCellWidth = axis * gridLayer.Width / gridCellCountX + offset;
+            graphics.DrawLine(Pens.Black, gridCellWidth, 0, gridCellWidth, gridLayer.Height);
         }
 
 
@@ -134,10 +149,10 @@ namespace DrawLines
 
         private Point AdjustPointToGrid(Point point)
         {
-            int gridCellWidth = gridLayer.Width / gridCellCount;
-            int gridCellHeight = gridLayer.Height / gridCellCount;
-            int x = point.X * (gridCellCount + 1) / gridLayer.Width;
-            int y = point.Y * (gridCellCount + 1) / gridLayer.Height;
+            int gridCellWidth = gridLayer.Width / gridCellCountX;
+            int gridCellHeight = gridLayer.Height / gridCellCountY;
+            int x = point.X * (gridCellCountX + 1) / gridLayer.Width;
+            int y = point.Y * (gridCellCountY + 1) / gridLayer.Height;
             point = new Point(x * gridCellWidth, y * gridCellHeight);
             return point;
         }
