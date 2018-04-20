@@ -20,11 +20,11 @@ namespace DrawLines
         private Point start;
         private List<Point> points;
 
-        private const int gridCellCountX = 1;
+        private const int gridCellCountX = 20;
         private const int gridCellCountY = 10;
         private const int cellSizeInPixels = 40;
-        private const int windowXBoundriesInPixels = 20;
-        private const int windowYBoundriesInPixels = 40;
+        private const int windowXBoundryInPixels = 20;
+        private const int windowYBoundryInPixels = 40;
         private const int drawSurfaceMaringToWindowInPixels = 10;
         private const int gridLinesMarginToLayerInPixels = 1;
 
@@ -63,7 +63,7 @@ namespace DrawLines
         {
             int windowSizeX = drawSurfaceSizeX + drawSurfaceMaringToWindowInPixels * 2;
             int windowSizeY = drawSurfaceSizeY + drawSurfaceMaringToWindowInPixels * 2;
-            MaximumSize = new Size(windowSizeX + windowXBoundriesInPixels, windowSizeY + windowYBoundriesInPixels);
+            MaximumSize = new Size(windowSizeX + windowXBoundryInPixels, windowSizeY + windowYBoundryInPixels);
             AutoScrollMargin = new Size(drawSurfaceMaringToWindowInPixels, drawSurfaceMaringToWindowInPixels);
         }
 
