@@ -13,20 +13,19 @@ namespace DrawLines
     public partial class Designer : Form
     {
 
-      //  private NoFlickerPanel drawSurface;
+        private NoFlickerPanel drawSurface;
         private Bitmap gridLayer;
         private Bitmap linesLayer;
         private Bitmap currentLineLayer;
         private Point start;
         private List<Point> points;
 
-        private const int gridCellCount = 20;
-        private const int cellSizeInPixels = 50;
+        private const int gridCellCount = 30;
+        private const int cellSizeInPixels = 40;
         private const int windowXBoundriesInPixels = 20;
         private const int windowYBoundriesInPixels = 40;
         private const int drawSurfaceMaringToWindowInPixels = 10;
         private const int linesMarginToLayerInPixels = 1;
-
 
 
         public Designer()
@@ -34,23 +33,40 @@ namespace DrawLines
             points = new List<Point>();
             InitializeComponent();
 
-            drawSurface.Location = new Point(drawSurfaceMaringToWindowInPixels, drawSurfaceMaringToWindowInPixels);
             int drawSurfaceSize = cellSizeInPixels * gridCellCount;
-            drawSurface.Size = new Size(drawSurfaceSize, drawSurfaceSize);
-            int windowSize = drawSurfaceSize + drawSurfaceMaringToWindowInPixels * 2;
+            CreateDrawSurface(drawSurfaceSize);
+            AdjustWindowSize(drawSurfaceSize);
 
-            MaximumSize = new Size(windowSize + windowXBoundriesInPixels, windowSize + windowYBoundriesInPixels);
-            AutoScrollMargin = new Size(drawSurfaceMaringToWindowInPixels, drawSurfaceMaringToWindowInPixels);
             CreateOrRecreateLayer(ref gridLayer);
             PaintGrid();
-
             CreateOrRecreateLayer(ref linesLayer);
             CreateOrRecreateLayer(ref currentLineLayer);
         }
 
+        private void CreateDrawSurface(int drawSurfaceSize)
+        {
+            drawSurface = new NoFlickerPanel();
+            SuspendLayout();
+            drawSurface.Name = "drawSurface";
+            drawSurface.Location = new Point(drawSurfaceMaringToWindowInPixels, drawSurfaceMaringToWindowInPixels);
+            drawSurface.Size = new Size(drawSurfaceSize, drawSurfaceSize);
+            drawSurface.TabIndex = 0;
+            drawSurface.Paint += new PaintEventHandler(drawSurface_Paint);
+            drawSurface.MouseClick += new MouseEventHandler(drawSurface_MouseClickStart);
+            Controls.Add(drawSurface);
+            ResumeLayout(false);
+        }
+
+        private void AdjustWindowSize(int drawSurfaceSize)
+        {
+            int windowSize = drawSurfaceSize + drawSurfaceMaringToWindowInPixels * 2;
+            MaximumSize = new Size(windowSize + windowXBoundriesInPixels, windowSize + windowYBoundriesInPixels);
+            AutoScrollMargin = new Size(drawSurfaceMaringToWindowInPixels, drawSurfaceMaringToWindowInPixels);
+        }
+
         private void PaintGrid()
         {
-          
+
             using (Graphics graphics = Graphics.FromImage(gridLayer))
             {
                 for (int i = 0; i < gridCellCount; i++)
@@ -160,7 +176,8 @@ namespace DrawLines
             {
                 layer.Dispose();
             }
-            catch (Exception) {
+            catch (Exception)
+            {
             }
             finally
             {
