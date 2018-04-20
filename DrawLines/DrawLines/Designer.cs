@@ -13,22 +13,39 @@ namespace DrawLines
     public partial class Designer : Form
     {
 
+      //  private NoFlickerPanel drawSurface;
         private Bitmap gridLayer;
-        private Bitmap currentLineLayer;
         private Bitmap linesLayer;
-        private Point? start;
+        private Bitmap currentLineLayer;
+        private Point start;
         private List<Point> points;
-        private int gridCellCount;
+
+        private const int gridCellCount = 20;
+        private const int cellSizeInPixels = 50;
+        private const int windowXBoundriesInPixels = 20;
+        private const int windowYBoundriesInPixels = 40;
+        private const int drawSurfaceMaringToWindowInPixels = 10;
+        private const int linesMarginToLayerInPixels = 1;
+
+
 
         public Designer()
         {
-            InitializeComponent();
-            gridLayer = new Bitmap(drawSurface.Width, drawSurface.Height);
-            currentLineLayer = new Bitmap(drawSurface.Width, drawSurface.Height);
-            linesLayer = new Bitmap(drawSurface.Width, drawSurface.Height);
             points = new List<Point>();
-            gridCellCount = 20;
+            InitializeComponent();
+
+            drawSurface.Location = new Point(drawSurfaceMaringToWindowInPixels, drawSurfaceMaringToWindowInPixels);
+            int drawSurfaceSize = cellSizeInPixels * gridCellCount;
+            drawSurface.Size = new Size(drawSurfaceSize, drawSurfaceSize);
+            int windowSize = drawSurfaceSize + drawSurfaceMaringToWindowInPixels * 2;
+
+            MaximumSize = new Size(windowSize + windowXBoundriesInPixels, windowSize + windowYBoundriesInPixels);
+            AutoScrollMargin = new Size(drawSurfaceMaringToWindowInPixels, drawSurfaceMaringToWindowInPixels);
+            CreateOrRecreateLayer(ref gridLayer);
             PaintGrid();
+
+            CreateOrRecreateLayer(ref linesLayer);
+            CreateOrRecreateLayer(ref currentLineLayer);
         }
 
         private void PaintGrid()
@@ -38,21 +55,32 @@ namespace DrawLines
             {
                 for (int i = 0; i < gridCellCount; i++)
                 {
-                    DrawHorizontalAndVerticalLines(graphics, i);
+                    DrawGridHorizontalAndVerticalLines(graphics, i);
                 }
+                DrawGridRightAndBottomLines(graphics);
             }
             drawSurface.Invalidate();
         }
 
-        private void DrawHorizontalAndVerticalLines(Graphics graphics, int axis)
+        private void DrawGridHorizontalAndVerticalLines(Graphics graphics, int axis)
         {
-            int gridCellWidth = axis * drawSurface.Width / gridCellCount;
-            int gridCellHeight = axis * drawSurface.Height / gridCellCount;
-            graphics.DrawLine(Pens.Gray, gridCellWidth, 0, gridCellWidth, drawSurface.Height);
-            graphics.DrawLine(Pens.Gray, 0, gridCellHeight, drawSurface.Width, gridCellHeight);
+            DrawHorizontalAndVerticalLines(graphics, axis, 0);
         }
 
-      
+        private void DrawGridRightAndBottomLines(Graphics graphics)
+        {
+            DrawHorizontalAndVerticalLines(graphics, gridCellCount, -linesMarginToLayerInPixels);
+        }
+
+
+        private void DrawHorizontalAndVerticalLines(Graphics graphics, int axis, int offset)
+        {
+            int gridCellWidth = axis * gridLayer.Width / gridCellCount + offset;
+            int gridCellHeight = axis * gridLayer.Height / gridCellCount + offset;
+            graphics.DrawLine(Pens.Black, gridCellWidth, 0, gridCellWidth, gridLayer.Height);
+            graphics.DrawLine(Pens.Black, 0, gridCellHeight, gridLayer.Width, gridCellHeight);
+        }
+
 
         private void drawSurface_Paint(object sender, PaintEventArgs e)
         {
@@ -62,17 +90,45 @@ namespace DrawLines
             e.Graphics.DrawImage(linesLayer, zeroing);
         }
 
-        private void drawSurface_MouseClick(object sender, MouseEventArgs e)
+        private void drawSurface_MouseClickStart(object sender, MouseEventArgs e)
         {
 
-            Point end = drawSurface.PointToClient(Cursor.Position);
-            points.Add(end);
-            start = end;
+            Point point = AdjustPointToGrid(drawSurface.PointToClient(Cursor.Position));
+            points.Add(point);
+            start = point;
+
+            drawSurface.MouseMove += new MouseEventHandler(drawSurface_MouseMove);
+            drawSurface.MouseClick -= new MouseEventHandler(drawSurface_MouseClickStart);
+            drawSurface.MouseClick += new MouseEventHandler(drawSurface_MouseClickEnd);
+        }
+
+        private void drawSurface_MouseClickEnd(object sender, MouseEventArgs e)
+        {
+
+            Point point = AdjustPointToGrid(drawSurface.PointToClient(Cursor.Position));
+            points.Add(point);
             PaintLines();
+
+            CreateOrRecreateLayer(ref currentLineLayer);
+
+            drawSurface.MouseMove -= new MouseEventHandler(drawSurface_MouseMove);
+            drawSurface.MouseClick += new MouseEventHandler(drawSurface_MouseClickStart);
+            drawSurface.MouseClick -= new MouseEventHandler(drawSurface_MouseClickEnd);
+        }
+
+        private Point AdjustPointToGrid(Point point)
+        {
+            int gridCellWidth = gridLayer.Width / gridCellCount;
+            int gridCellHeight = gridLayer.Height / gridCellCount;
+            int x = point.X * (gridCellCount + 1) / gridLayer.Width;
+            int y = point.Y * (gridCellCount + 1) / gridLayer.Height;
+            point = new Point(x * gridCellWidth, y * gridCellHeight);
+            return point;
         }
 
         private void PaintLines()
         {
+            CreateOrRecreateLayer(ref linesLayer);
             using (Graphics graphics = Graphics.FromImage(linesLayer))
             {
                 for (int i = 1; i < points.Count; i++)
@@ -90,15 +146,25 @@ namespace DrawLines
 
         private void PaintCurrentLine()
         {
-            if (start != null)
+            CreateOrRecreateLayer(ref currentLineLayer);
+            using (Graphics graphics = Graphics.FromImage(currentLineLayer))
             {
-                currentLineLayer.Dispose();
-                currentLineLayer = new Bitmap(drawSurface.Width, drawSurface.Height);
-                using (Graphics graphics = Graphics.FromImage(currentLineLayer))
-                {
-                    graphics.DrawLine(Pens.Orange, start.Value, drawSurface.PointToClient(Cursor.Position));
-                }
-                drawSurface.Invalidate();
+                graphics.DrawLine(Pens.Orange, start, drawSurface.PointToClient(Cursor.Position));
+            }
+            drawSurface.Invalidate();
+        }
+
+        private void CreateOrRecreateLayer(ref Bitmap layer)
+        {
+            try
+            {
+                layer.Dispose();
+            }
+            catch (Exception) {
+            }
+            finally
+            {
+                layer = new Bitmap(drawSurface.Width, drawSurface.Height);
             }
         }
     }
