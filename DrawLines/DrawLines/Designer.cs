@@ -20,8 +20,8 @@ namespace DrawLines
         private Point start;
         private List<Point> points;
 
-        private const int gridCellCountX = 20;
-        private const int gridCellCountY = 10;
+        private const int gridCellCountX = 10;
+        private const int gridCellCountY = 20;
         private const int cellSizeInPixels = 40;
         private const int windowXBoundryInPixels = 20;
         private const int windowYBoundryInPixels = 40;
@@ -162,7 +162,7 @@ namespace DrawLines
             CreateOrRecreateLayer(ref linesLayer);
             using (Graphics graphics = Graphics.FromImage(linesLayer))
             {
-                for (int i = 1; i < points.Count; i++)
+                for (int i = 1; i < points.Count; i=i+2)
                 {
                     graphics.DrawLine(Pens.Red, points[i - 1], points[i]);
                 }
